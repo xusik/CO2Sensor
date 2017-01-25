@@ -48,11 +48,9 @@ int pinDHT11 = 13;
 byte temperature_web = 0;
 byte humidity_web = 0;
 
-bool tickOccured;
 bool printToDisplay;
 
 int k = 0, t;
-int oneHour = 0;
 int timezoneCorrection;
 int timeIndex = 0;
 unsigned int ppm;
@@ -116,13 +114,6 @@ String getTime() {
 void timerCallback(void *pArg) {
 
   printToDisplay = true;
-
-  if ( oneHour == 60) {
-    tickOccured = true;
-    oneHour == 0;
-  } else {
-    oneHour++;
-  }
 
 } // End of timerCallback
 
@@ -210,7 +201,7 @@ void printCO2LCD() {
   lcd.setCursor(0, 1);
   lcd.print("CO2  Level: ");
   lcd.print(String(ppm));
-  Blynk.virtualWrite(V0,ppm);
+  Blynk.virtualWrite(V0, ppm);
   byte temperature = 0;
   byte humidity = 0;
 
@@ -229,238 +220,18 @@ void printCO2LCD() {
       lcd.setCursor(0, 2);
       lcd.print("TEMP Level: ");
       lcd.print(int(temperature));
-      Blynk.virtualWrite(V1,int(temperature));
+      Blynk.virtualWrite(V1, int(temperature));
       lcd.setCursor(0, 3);
       lcd.print("HUM  Level: ");
       lcd.print(int(humidity));
-      Blynk.virtualWrite(V2,int(humidity));
+      Blynk.virtualWrite(V2, int(humidity));
     }
   }
 
 
-}
-
-void handleRoot() {
-
-  printCO2LCD();
-  ppm = checkCO2_level();
-
-  String message =  "<html>\n";
-  message += "  <head>\n";
-  message += "  <meta http-equiv=\"refresh\" content=\"60\">\n";
-  message += "    <!--Load the AJAX API-->\n";
-  message += "    <script type=\"text/javascript\" src=\"https://www.gstatic.com/charts/loader.js\"></script>\n";
-  message += "    <script type=\"text/javascript\">\n";
-  message += "      google.charts.load('current', {'packages':['gauge']});\n";
-  message += "      google.charts.setOnLoadCallback(drawChart);\n";
-  message += "      function drawChart() {\n";
-  message += "\n";
-  message += "        var data = google.visualization.arrayToDataTable([\n";
-  message += "          ['Label', 'Value'],\n";
-  message += "          ['PPM', ";
-  message += String(ppm);
-  message += "],\n";
-  message += "        ]);\n";
-  message += "\n";
-  message += "        var options = {\n";
-  message += "          width: 300, height: 300,\n";
-  message += "          redFrom: 1500, redTo: 2000,\n";
-  message += "          yellowFrom:1000, yellowTo: 1500,\n";
-  message += "          minorTicks: 5,\n";
-  message += "          max: 2000,\n";
-  message += "          min: 400\n";
-  message += "        };\n";
-  message += "\n";
-  message += "        var chart = new google.visualization.Gauge(document.getElementById('chart_div'));\n";
-  message += "\n";
-  message += "        chart.draw(data, options);\n";
-  message += "      } \n";
-  message += "    </script>\n";
-  message += "  </head>\n";
-  message += "\n";
-  message += "  <body>\n";
-  message += "<style type=\"text/css\">\n";
-  message += ".tg  {border-collapse:collapse;border-spacing:0;border-color:#aaa;}\n";
-  message += ".tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:#aaa;color:#333;background-color:#fff;}\n";
-  message += ".tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:#aaa;color:#fff;background-color:#f38630;}\n";
-  message += ".tg .tg-bzci{font-size:20px;text-align:center;vertical-align:top}\n";
-  message += "</style>\n";
-  message += "\n";
-  message += " <table class=\"column\">\n";
-  message += "    <tr>\n";
-  message += "    <td><div id=\"chart_div\"></div></td>\n";
-  message += "\t</tr>\n";
-  message += " </table>\n";
-  message += "\n";
-  message += " <table class=\"tg\">\n";
-  message += "  <tr>\n";
-  message += "    <th class=\"tg-bzci\">CO<sub>2</sub> Level<br>ppm</th>\n";
-  message += "    <th class=\"tg-bzci\">Temperature<br>&deg;C</th>\n";
-  message += "    <th class=\"tg-bzci\">Humidity<br>%</th>\n";
-  message += "  </tr>\n";
-  message += "  <tr>\n";
-  message += "    <td class=\"tg-bzci\">";
-  message += String(ppm);
-  message += "</td>\n";
-  message += "    <td class=\"tg-bzci\">";
-  message += String(temperature_web);
-  message += "</td>\n";
-  message += "    <td class=\"tg-bzci\">";
-  message += String(humidity_web);
-  message += "</td>\n";
-  message += "  </tr>\n";
-  message += " </table>\n";
-  message += " \n";
-
-  if (String(WiFi.localIP()) == "0") {
-    message += "<p/>";
-    message += "<form action=\"wifi_connect\" method=\"get\">\n";
-    message += "SSID:<input type=\"text\" name=\"ssid\">\n";
-    message += "<p/>Password:<input type=\"text\" name=\"pass\">\n";
-    message += "<br><br><input type=\"submit\" value=\"Connect\">\n";
-    message += "</form>\n";
-  }
-
-  message += "  </body>\n";
-  message += " </html>";
-
-
-  server.send ( 200, "text/html", message );
-}
-
-
-
-void handle_charts() {
-
-  k = 0;
-  t = timeIndex;
-  printCO2Measurements = "";
-  while (t < 23) {
-    t++;
-    if (co2[t] != "") {
-      printCO2Measurements += "[" + String(k) + "," + co2[t] + "]";
-      printCO2Measurements += ",";
-      k++;
-    }
-  }
-  t = 0;
-  while (t <= timeIndex) {
-    if (co2[t] != "") {
-      printCO2Measurements += "[" + String(k) + "," + co2[t] + "]";
-      printCO2Measurements += ",";
-      k++;
-    }
-    t++;
-  }
-  // index = i
-  String message = "<html>\n";
-  message += "  <head>\n";
-  message += "    <!--Load the AJAX API-->\n";
-  message += "    <script type=\"text/javascript\" src=\"https://www.gstatic.com/charts/loader.js\"></script>\n";
-  message += "    <script type=\"text/javascript\">\n";
-  message += "\n";
-  message += "      google.charts.load('current', {packages: ['corechart', 'line']});\n";
-  message += "      google.charts.setOnLoadCallback(drawChartTemp);\n";
-  message += "\n";
-  message += "    function drawChartTemp() {\n";
-  message += "\n";
-  message += "      var data = new google.visualization.DataTable();\n";
-  message += "      data.addColumn('number', 'Time');\n";
-  message += "      data.addColumn('number', 'CO2 in ppm');\n";
-  message += "\n";
-  message += "      data.addRows([\n";
-  message += "        " + printCO2Measurements + "\n";
-  message += "\n";
-  message += "      ]);\n";
-  message += "\n";
-  message += "      var options = {\n";
-  message += "        chart: {\n";
-  message += "          title: 'Temperature',\n";
-  message += "          subtitle: 'in C'\n";
-  message += "        },\n";
-  message += "        width: 900,\n";
-  message += "        pointSize : 5,\n";
-  message += "        height: 500\n";
-  message += "      };\n";
-  message += "\n";
-  message += "      var chart = new google.visualization.LineChart(document.getElementById('linechart_material'));\n";
-  message += "\n";
-  message += "      chart.draw(data, options);\n";
-  message += "    }\n";
-  message += "    </script>\n";
-  message += "  </head>\n";
-  message += "\n";
-  message += "  <body>\n";
-  message += "\n";
-  message += "    <div id=\"linechart_material\"></div>\n";
-  message += "  </body>\n";
-  message += " </html>\n";
-
-  server.send(200, "text/html", message);
-
-}
-
-
-
-void handleNotFound() {
-  String message = "File Not Found\n\n";
-  message += "URI: ";
-  message += server.uri();
-  message += "\nMethod: ";
-  message += ( server.method() == HTTP_GET ) ? "GET" : "POST";
-  message += "\nArguments: ";
-  message += server.args();
-  message += "\n";
-
-  for ( uint8_t i = 0; i < server.args(); i++ ) {
-    message += " " + server.argName ( i ) + ": " + server.arg ( i ) + "\n";
-  }
-
-  server.send ( 404, "text/plain", message );
-}
-
-
-void wifi_connect() {
-  int arg1len = server.arg(0).length() + 1;
-  int arg2len = server.arg(1).length() + 1;
-
-  char char_array[arg1len];
-  char char_array1[arg2len];
-
-  server.arg(0).toCharArray(char_array, arg1len);
-  server.arg(1).toCharArray(char_array1, arg2len);
-  if (String(WiFi.localIP()) == "0") {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Conn to WiFi");
-    yield();
-    lcd.setCursor(0, 1);
-    lcd.print("ssid:");
-    yield();
-    lcd.setCursor(0, 2);
-    lcd.print(server.arg(0));
-    yield();
-    lcd.setCursor(0, 3);
-    lcd.print("pass:");
-    yield();
-    lcd.setCursor(0, 4);
-    lcd.print(server.arg(1));
-    yield();
-
-    WiFi.begin ( char_array, char_array1 );
-  }
-
-  String message = WiFi.localIP().toString();
-  lcd.setCursor(0, 5);
-  delay(20000);
-  lcd.print(WiFi.localIP().toString());
-  server.send ( 200, "text/plain", message );
 }
 
 void startWIFI(void) {
-
-
-
   lcd.clear();
   yield();
   lcd.print("Conn to WiFi:");
@@ -469,15 +240,7 @@ void startWIFI(void) {
   lcd.print("SSID: " + String(ssid2));
   lcd.setCursor(0, 2);
   yield();
-//  WiFi.begin ( ssid2, password2 );
-//  while ( WiFi.status() != WL_CONNECTED ) {
-//    delay ( 500 );
-//    lcd.print( "." );
-//    if (retry == 40) {
-//      break;
-//    }
-//    retry ++;
-//  }
+
   Blynk.begin(auth, ssid2, password2);
   yield();
   checkCO2_level();
@@ -492,42 +255,11 @@ void startWIFI(void) {
     lcd.print("SSID: " + String(ssid));
     lcd.setCursor(0, 2);
     yield();
-//    WiFi.begin ( ssid, password );
-//    while ( WiFi.status() != WL_CONNECTED ) {
-//      delay ( 500 );
-//      lcd.print( "." );
-//      if (retry == 40) {
-//        break;
-//      }
-//      retry ++;
-//    }
     Blynk.begin(auth, ssid, password);
   }
 
   if (WiFi.status() != WL_CONNECTED) {
-    WiFi.softAP(ssid1, password);
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("NO WiFi");
-    yield();
-    lcd.setCursor(0, 1);
-    lcd.print(WiFi.softAPIP().toString());
-    yield();
-    lcd.setCursor(0, 2);
-    lcd.print("ssid:");
-    yield();
-    lcd.setCursor(0, 3);
-    lcd.print("ESP_CO2");
-    yield();
-    lcd.setCursor(0, 4);
-    lcd.print("pass:");
-    yield();
-    lcd.setCursor(0, 5);
-    lcd.print("lobster1234");
-
-
-    delay (30000);
-
+    ESP.restart();
   }
 
   GMTTime = getTime();
@@ -556,13 +288,7 @@ void startWIFI(void) {
   if ( MDNS.begin ( "esp8266" ) ) {
     Serial.println ( "MDNS responder started" );
   }
-
-  server.on("/wifi_connect", wifi_connect);
-  server.on ( "/", handleRoot );
-  server.onNotFound ( handleNotFound );
-  server.on("/CO2", handle_charts);
   yield();
-  server.begin();
 
 }
 
@@ -575,7 +301,6 @@ void setup ( void ) {
 
   startWIFI();
 
-  tickOccured = true;
   printToDisplay = true;
   user_init();
 
@@ -585,41 +310,19 @@ void loop ( void ) {
   if (WiFi.status() != WL_CONNECTED) {
     startWIFI();
   }
-  server.handleClient();
   Blynk.run();
 
 
-  if (tickOccured == true)
-  {
-
-    GMTTime = getTime();
-    yield();
-    if (GMTTime != "No internet connection.") {
-      if ( GMTTime.substring(17, 19).toInt() > 21 ) {
-        timeIndex = GMTTime.substring(17, 19).toInt() - 22;
-      } else {
-        timeIndex = GMTTime.substring(17, 19).toInt() + 2;
-      }
-    } else {
-
-      if (timeIndex < 23) {
-        timeIndex++;
-      }
-      else {
-        timeIndex = 0;
-      }
-    }
-
-    ppm = checkCO2_level();
-    yield();
-    co2[timeIndex] = ppm;
-    tickOccured = false;
-  }
 
   if (printToDisplay == true) {
 
     printCO2LCD();
     printToDisplay = false;
+
+    if (!Blynk.connected()) {
+      Blynk.connect();
+    }
+
   }
 
 
