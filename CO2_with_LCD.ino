@@ -27,7 +27,6 @@ extern "C" {
 #include "user_interface.h"
 }
 #include <ESP8266WiFi.h>
-#include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <SoftwareSerial.h>
@@ -35,37 +34,30 @@ extern "C" {
 #include "Nokia_5110.h"
 #include <BlynkSimpleEsp8266.h>
 
-
+//Nokia LCD pins
 #define RST 16
 #define CE 5
 #define DC 4
 #define DIN 0
 #define CLK 2
 
-int pinDHT11 = 13;
+//DHT11 pin define
+#define pinDHT11 13
 
-
-byte temperature_web = 0;
-byte humidity_web = 0;
 
 bool printToDisplay;
 
-int k = 0, t;
 int timezoneCorrection;
-int timeIndex = 0;
 unsigned int ppm;
-int retry = 0;
 int DHT_Problem;
 
-String co2[24] = "";
 String GMTTime = "no time";
-String printCO2Measurements;
-const char* ssid = "****";     // your network SSID (name)
-const char* ssid1 = "****";     // your AP SSID (name)
-const char* password = "****";  // your network password
-const char* ssid2 = "****";
-const char* password2 = "****";
-char auth[] = "****";
+const char* ssid = "Xiaomi_9171";     // your network SSID (name)
+const char* ssid1 = "ESP_CO2";     // your AP SSID (name)
+const char* password = "lobster1234";  // your network password
+const char* ssid2 = "LVS-Employee";
+const char* password2 = "-rAsweT6";
+char auth[] = "c9f01db477264410a7266624e5792467";
 
 os_timer_t myTimer;
 SimpleDHT11 dht11;
@@ -215,8 +207,6 @@ void printCO2LCD() {
 
     } else {
       yield();
-      temperature_web = temperature;
-      humidity_web = humidity;
       lcd.setCursor(0, 2);
       lcd.print("TEMP Level: ");
       lcd.print(int(temperature));
@@ -246,7 +236,6 @@ void startWIFI(void) {
   checkCO2_level();
 
   if (WiFi.status() != WL_CONNECTED) {
-    retry = 0;
     lcd.clear();
     yield();
     lcd.print("Conn to WiFi:");
@@ -313,9 +302,7 @@ void loop ( void ) {
   Blynk.run();
 
 
-
   if (printToDisplay == true) {
-
     printCO2LCD();
     printToDisplay = false;
 
