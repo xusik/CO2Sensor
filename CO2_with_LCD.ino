@@ -52,12 +52,12 @@ unsigned int ppm;
 int DHT_Problem;
 
 String GMTTime = "no time";
-const char* ssid = "Xiaomi_9171";     // your network SSID (name)
-const char* ssid1 = "ESP_CO2";     // your AP SSID (name)
-const char* password = "lobster1234";  // your network password
-const char* ssid2 = "LVS-Employee";
-const char* password2 = "-rAsweT6";
-char auth[] = "c9f01db477264410a7266624e5792467";
+const char* ssid = "****";     // your network SSID (name)
+const char* ssid1 = "****";     // your AP SSID (name)
+const char* password = "****";  // your network password
+const char* ssid2 = "****";
+const char* password2 = "****";
+char auth[] = "****";
 
 os_timer_t myTimer;
 SimpleDHT11 dht11;
