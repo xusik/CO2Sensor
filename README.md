@@ -1,11 +1,11 @@
 # CO2Sensor
-CO2, DHT11 sensors connecetd via ESP8266 to Blynk server
+MH-Z19, DHT11 sensors connecetd via ESP8266 to Blynk server
 
 ####Hardware:
-  - ESP8266        
-  - MH-Z19         connected via  software UART
+  - ESP8266 NodeMCU LoLin       
+  - MH-Z19         connected via software UART
   - DHT11          connected via 1wire
-  - Nokia 5110 LCD connected via  SPI
+  - Nokia 5110 LCD connected via SPI
   
 ```sh
               -------
